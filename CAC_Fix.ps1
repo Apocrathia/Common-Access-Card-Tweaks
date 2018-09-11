@@ -28,9 +28,19 @@ $path = "HKCU:\Software\Microsoft\Office\$version\Outlook\Preferences"
         Write-Host -ForegroundColor DarkGreen "$path Found"
 
         foreach ($key in $keys) {
-            if ((Get-ItemPropertyValue -Path $path -Name $key) -eq $value) {
-                Write-Host -ForegroundColor Gray "$key value already set"
-            } else {
+            # Test if key exists
+            try {
+                if ((Get-ItemPropertyValue -Path $path -Name $key) -eq $value) {
+                    Write-Host -ForegroundColor Gray "$key value already set"
+                } else {
+                    # Set key value
+                    New-ItemProperty -Path $path -Name $key -Value $value -PropertyType DWORD
+                    Write-Host -ForegroundColor Green "$key value set"
+                    $modified = 1
+                }
+            # It doesn't
+            } catch {
+                # Set key value
                 New-ItemProperty -Path $path -Name $key -Value $value -PropertyType DWORD
                 Write-Host -ForegroundColor Green "$key value set"
                 $modified = 1
@@ -39,15 +49,24 @@ $path = "HKCU:\Software\Microsoft\Office\$version\Outlook\Preferences"
         # Also write SupressNameChecks
         $path = "HKCU:\Software\Microsoft\Office\$version\Outlook\Security"
         $key = "SupressNameChecks"
-        if ((Get-ItemPropertyValue -Path $path -Name $key) -eq $value) {
-            Write-Host -ForegroundColor Gray "$key value already set"
-        } else {
-            New-ItemProperty -Path $path -Name $key -Value $value -PropertyType DWORD
-            Write-Host -ForegroundColor Green "$key value set"
-            $modified = 1
+        # Test if key exists
+        try {
+            if ((Get-ItemPropertyValue -Path $path -Name $key) -eq $value) {
+                Write-Host -ForegroundColor Gray "$key value already set"
+            } else {
+                New-ItemProperty -Path $path -Name $key -Value $value -PropertyType DWORD
+                Write-Host -ForegroundColor Green "$key value set"
+                $modified = 1
+            }
+        # It doesn't
+        } catch {
+                New-ItemProperty -Path $path -Name $key -Value $value -PropertyType DWORD
+                Write-Host -ForegroundColor Green "$key value set"
+                $modified = 1
         }
+
     } else {
-        # Move alone, nothing to see here
+        # Move along, nothing to see here
         Write-Host -ForegroundColor DarkGray "$path Not Found"
         continue
     }
